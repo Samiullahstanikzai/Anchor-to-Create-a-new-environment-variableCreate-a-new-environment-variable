@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Environment Variables</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <p class="eyebrow">Local demo</p>
+      <h1>Create an environment variable</h1>
+      <p class="lede">
+        Add a name and value, then save it. Variables stay in this browser
+        until you clear them.
+      </p>
+    </header>
+
+    <form id="variable-form" autocomplete="off">
+      <label>
+        Name
+        <input
+          id="var-name"
+          name="name"
+          type="text"
+          required
+          placeholder="API_URL"
+          pattern="[A-Za-z_][A-Za-z0-9_]*"
+          title="Use letters, numbers, and underscores. Must start with a letter or underscore."
+        />
+      </label>
+      <label>
+        Value
+        <input
+          id="var-value"
+          name="value"
+          type="text"
+          required
+          placeholder="https://example.com"
+        />
+      </label>
+      <button type="submit">Save variable</button>
+    </form>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <section aria-labelledby="list-heading">
+      <h2 id="list-heading">Saved variables</h2>
+      <ul id="variable-list"></ul>
+      <p id="empty-state" class="empty">No variables yet. Save one above.</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

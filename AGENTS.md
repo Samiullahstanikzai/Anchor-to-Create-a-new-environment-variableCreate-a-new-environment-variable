@@ -2,30 +2,31 @@
 
 ## Cursor Cloud specific instructions
 
-### Repository state
+### What this repo is
 
-This repository currently contains **no application or service code**. The only
-tracked file (besides this one) is `.github/workflows/wpcom.yml`, a GitHub
-Actions workflow ("Publish Website") that checks out the repo and uploads its
-contents as an artifact named `wpcom`. That workflow runs in GitHub CI only — it
-does not start any local service.
+This repository is a small **static website** plus a GitHub Actions workflow
+that publishes the site as a `wpcom` artifact.
 
-Because there is no product code, there is:
+- Site files live at the repo root: `index.html`, `styles.css`, `app.js`.
+- `.github/workflows/wpcom.yml` ("Publish Website") runs in GitHub CI on push
+  to `main` (or `workflow_dispatch`). It uploads the repo contents as an
+  artifact named `wpcom`. It does **not** start a local server.
 
-- **Nothing to install** — no `package.json`, `requirements.txt`, `go.mod`,
-  `composer.json`, `Gemfile`, or any other dependency manifest.
-- **Nothing to build** — no build system, `Makefile`, or `docker-compose`.
-- **Nothing to run** — no backend, frontend, CLI, or other runnable service.
+There is no Node/Python app, no package manager, and no backend. The
+environment update script is a no-op.
 
-The environment update script is therefore intentionally a no-op. If/when real
-application code is added, update the environment setup (update script and this
-file) to install dependencies and document how to lint, test, build, and run the
-new service(s).
+### Run the site locally
 
-### Validating the one existing artifact
+From the repo root:
 
-The only thing that can be checked locally is that the workflow YAML is
-well-formed:
+```bash
+python3 -m http.server 8000 --bind 127.0.0.1
+```
+
+Then open `http://127.0.0.1:8000/`. The page lets you save name/value pairs in
+`localStorage` (a local demo of creating environment variables).
+
+### Validate the workflow YAML
 
 ```bash
 python3 -c "import yaml; yaml.safe_load(open('.github/workflows/wpcom.yml')); print('workflow YAML OK')"

@@ -1,0 +1,139 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f1ea;
+  --ink: #1c1916;
+  --muted: #5c564e;
+  --card: #fffcf7;
+  --line: #d9d1c3;
+  --accent: #0f6b4c;
+  --accent-ink: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.app {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+h1,
+h2 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 2.25rem;
+}
+
+h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.lede,
+.empty,
+.status {
+  font-family: system-ui, sans-serif;
+}
+
+.lede {
+  margin: 0 0 1.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+form {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+}
+
+input {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+button {
+  justify-self: start;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.status {
+  min-height: 1.4rem;
+  margin: 0.9rem 0 0;
+  color: var(--accent);
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92rem;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.empty[hidden],
+ul:empty + .empty {
+  display: none;
+}
+
+code {
+  font: inherit;
+}
