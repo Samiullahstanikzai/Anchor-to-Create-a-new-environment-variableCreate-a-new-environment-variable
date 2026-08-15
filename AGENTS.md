@@ -17,7 +17,10 @@ environment update script is a no-op.
 
 ### Run the site locally
 
-From the repo root:
+`index.html` is self-contained (CSS and JS are inline). The simplest way to
+view it is to open that file in a browser — no server required.
+
+To serve it instead:
 
 ```bash
 python3 -m http.server 8000 --bind 127.0.0.1
