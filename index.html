@@ -141,8 +141,8 @@
       <p class="eyebrow">Local demo</p>
       <h1>Create an environment variable</h1>
       <p class="lede">
-        Add a name and value, then save it. Variables stay in this browser
-        until you clear them.
+        Type a name and a value, then click Save variable. A new row should
+        appear under Saved variables. This only saves in this browser tab.
       </p>
     </header>
 
@@ -153,10 +153,7 @@
           id="var-name"
           name="name"
           type="text"
-          required
-          placeholder="API_URL"
-          pattern="[A-Za-z_][A-Za-z0-9_]*"
-          title="Use letters, numbers, and underscores. Must start with a letter or underscore."
+          value="API_URL"
         />
       </label>
       <label>
@@ -165,8 +162,7 @@
           id="var-value"
           name="value"
           type="text"
-          required
-          placeholder="https://example.com"
+          value="https://example.com"
         />
       </label>
       <button type="submit">Save variable</button>
@@ -234,7 +230,10 @@
       event.preventDefault();
       const name = nameInput.value.trim();
       const value = valueInput.value.trim();
-      if (!name || !value) return;
+      if (!name || !value) {
+        status.textContent = "Type a name and a value first, then click Save variable.";
+        return;
+      }
 
       const next = loadVariables().filter(function (entry) {
         return entry.name !== name;
@@ -242,9 +241,9 @@
       next.push({ name: name, value: value });
       saveVariables(next);
 
-      status.textContent = "Saved " + name + ".";
-      form.reset();
-      nameInput.focus();
+      status.textContent = "Saved " + name + "=" + value + ". Look under Saved variables.";
+      nameInput.value = "";
+      valueInput.value = "";
       render();
     });
 
