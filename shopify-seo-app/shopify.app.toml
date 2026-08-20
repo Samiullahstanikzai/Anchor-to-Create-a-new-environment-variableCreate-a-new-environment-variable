@@ -1,0 +1,43 @@
+# Shopify CLI app configuration.
+# https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
+#
+# Run `shopify app config link` after creating the app in your Partner
+# Dashboard to sync `client_id` here, then `shopify app deploy` to push this
+# configuration (scopes, URLs, webhooks) to Shopify.
+
+name = "SEO Auditor"
+client_id = ""
+application_url = "https://example-tunnel-url.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,write_products,read_content,write_content"
+
+[auth]
+redirect_urls = ["https://example-tunnel-url.trycloudflare.com/auth/callback"]
+
+[webhooks]
+api_version = "2024-10"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/scopes_update"]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = ["customers/data_request"]
+  uri = "/webhooks/customers/data_request"
+
+  [[webhooks.subscriptions]]
+  topics = ["customers/redact"]
+  uri = "/webhooks/customers/redact"
+
+  [[webhooks.subscriptions]]
+  topics = ["shop/redact"]
+  uri = "/webhooks/shop/redact"
+
+[pos]
+embedded = false
