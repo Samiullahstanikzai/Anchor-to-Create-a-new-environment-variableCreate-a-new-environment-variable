@@ -6,20 +6,22 @@ import { registerAuthRoutes } from "./routes/auth.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 import { registerApiRoutes } from "./routes/api.js";
 import { registerAdminRoutes } from "./routes/admin.js";
+import { registerDemoRoutes } from "./routes/demo.js";
 import { registerStaticRoutes } from "./routes/static.js";
 
 export function createApp() {
   const router = new Router();
 
   // Registration order matters: more specific routers first. In
-  // particular, `/api/admin/*` must be registered before the generic
-  // `/api/:type` and `/api/:type/:id` routes in registerApiRoutes, since
-  // those wildcard patterns have the same segment count and would
-  // otherwise shadow the admin API. The static file catch-all (`/:file`)
-  // goes last so it never shadows a real route.
+  // particular, `/api/admin/*` and `/api/demo/*` must be registered before
+  // the generic `/api/:type` and `/api/:type/:id` routes in
+  // registerApiRoutes, since those wildcard patterns have the same
+  // segment count and would otherwise shadow them. The static file
+  // catch-all (`/:file`) goes last so it never shadows a real route.
   registerAuthRoutes(router);
   registerWebhookRoutes(router);
   registerAdminRoutes(router);
+  registerDemoRoutes(router);
   registerApiRoutes(router);
   registerStaticRoutes(router);
 
@@ -96,6 +98,7 @@ function main() {
   server.listen(config.port, () => {
     console.log(`Shopify SEO app listening on http://localhost:${config.port}`);
     console.log(`Configured public HOST: ${config.host}`);
+    console.log(`Live demo (no login, sample data): http://localhost:${config.port}/demo`);
     console.log(
       isAdminEnabled()
         ? `Admin dashboard: http://localhost:${config.port}/admin`

@@ -32,6 +32,21 @@ registry access. If you'd rather use the official `@shopify/shopify-app-remix`
 stack, this codebase is small enough to be a clear reference for wiring the
 same OAuth/webhook/session-token flows yourself.
 
+## Live demo — see it working with zero setup
+
+Run `npm start` and open `/demo` (e.g. `http://localhost:3000/demo`). No
+login, no Shopify account, no API keys — it's populated with a realistic
+sample dataset (`src/lib/demoData.js`): 8 products, 3 collections, 3 pages,
+and 3 blog posts, each deliberately written with a specific, real SEO
+problem (or none at all) so you see the actual spread of scores, checks,
+and suggestions a real store would produce, not a placeholder.
+
+Everything in demo mode is real except the data source:
+- Scoring, suggestions, editing, and saving all go through the exact same code as the real Shopify-connected dashboard (`src/lib/seoScorer.js`, `src/lib/resourceService.js`'s logic reused via `demoData.js`).
+- The **broken-link checker is not faked** — one sample product's description contains real links to `github.com`, and clicking "Check for broken links" makes real HTTP requests that correctly report one as OK and the other (a made-up path) as a real 404.
+- Edits you make (SEO title/description, handle, alt text) are kept in memory for the life of the server process, so "Save" visibly changes the score — click "Reset demo data" in the banner to start over.
+- The one thing that's canned rather than live is the sitemap/robots.txt check, since there's no real public domain to check in demo mode.
+
 ## Deploying it so you get a real, clickable URL
 
 Everything above runs locally with `npm start`, but a browser needs a real
@@ -43,7 +58,7 @@ function, with `public/*.html|js|css` served directly by Vercel.
 **Honest caveat:** this configuration has not been exercised against a real
 Vercel deployment — doing so requires a connected Vercel account, which
 wasn't available while building this. What *is* verified locally
-(`test/vercelHandler.test.js`, part of the 95-test suite) is that the
+(`test/vercelHandler.test.js`, part of the 117-test suite) is that the
 serverless entry point wraps the same app logic correctly when run behind a
 plain HTTP server. The Vercel-specific pieces — static-file-vs-rewrite
 routing precedence and `includeFiles` bundling — should be treated as a
@@ -101,13 +116,15 @@ shopify-seo-app/
       router.js                 # tiny `:param` path router
       cookies.js                 # cookie parse/serialize helpers
       adminAuth.js                # signed-cookie auth for the operator dashboard
+      demoData.js                  # realistic in-memory sample dataset for Demo Mode
     queries/                # GraphQL query/mutation strings per resource type
-    routes/                 # auth.js, webhooks.js, api.js, admin.js, static.js
+    routes/                 # auth.js, webhooks.js, api.js, admin.js, demo.js, static.js
   public/                  # embedded app frontend (App Bridge + vanilla JS, no build step)
                             # + admin-login.html / admin.html / admin.js for the operator dashboard
+                            # + demo.html for the no-login Demo Mode (shares app.js + styles.css)
   api/index.js             # Vercel serverless function entry point (wraps the same app logic)
   vercel.json              # Vercel routing config: rewrites dynamic paths to api/index.js
-  test/                    # node:test unit + integration tests (95 tests, no deps needed)
+  test/                    # node:test unit + integration tests (117 tests, no deps needed)
   shopify.app.toml         # Shopify CLI app configuration (scopes, webhooks, URLs)
 ```
 
@@ -149,7 +166,7 @@ shopify-seo-app/
 npm test
 ```
 
-95 tests cover HMAC/session-token verification (forged signatures, expired
+117 tests cover HMAC/session-token verification (forged signatures, expired
 tokens, audience mismatches), admin-dashboard login/session-cookie
 verification, the SEO scoring engine including the visibility check (every
 status threshold), the broken-link extractor and checker (including a real

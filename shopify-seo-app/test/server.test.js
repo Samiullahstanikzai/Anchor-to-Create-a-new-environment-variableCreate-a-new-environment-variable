@@ -196,6 +196,91 @@ describe("admin dashboard", () => {
   });
 });
 
+describe("demo mode", () => {
+  test("GET /demo serves the demo shell without requiring auth", async () => {
+    const res = await fetch(`${baseUrl}/demo`);
+    assert.equal(res.status, 200);
+    const text = await res.text();
+    assert.match(text, /__DEMO_MODE__\s*=\s*true/);
+  });
+
+  test("GET /api/demo/dashboard works with no Authorization header at all", async () => {
+    const res = await fetch(`${baseUrl}/api/demo/dashboard`);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.summary.product.count > 0);
+  });
+
+  test("GET /api/demo/product lists sample products, unauthenticated", async () => {
+    const res = await fetch(`${baseUrl}/api/demo/product`);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.items.length > 0);
+    assert.ok(data.items[0].seo);
+  });
+
+  test("full edit round-trip: get an item, change its SEO fields, see it reflected", async () => {
+    const listRes = await fetch(`${baseUrl}/api/demo/collection`);
+    const { items } = await listRes.json();
+    const id = items[0].id;
+
+    const putRes = await fetch(`${baseUrl}/api/demo/collection/${encodeURIComponent(id)}/seo`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "Integration Test Title", description: "Integration test description." }),
+    });
+    assert.equal(putRes.status, 200);
+
+    const getRes = await fetch(`${baseUrl}/api/demo/collection/${encodeURIComponent(id)}`);
+    const updated = await getRes.json();
+    assert.equal(updated.seoTitle, "Integration Test Title");
+  });
+
+  test("GET /api/demo/:type/:id/links runs the real link checker (live network call)", async () => {
+    const listRes = await fetch(`${baseUrl}/api/demo/product`);
+    const { items } = await listRes.json();
+    const productWithLinks = items.find((p) => /<a\s+href/i.test(p.bodyHtml));
+    assert.ok(productWithLinks);
+
+    const res = await fetch(`${baseUrl}/api/demo/product/${encodeURIComponent(productWithLinks.id)}/links`);
+    assert.equal(res.status, 200);
+    const result = await res.json();
+    assert.ok(result.checked >= 1);
+  });
+
+  test("POST /api/demo/reset restores the original seed data", async () => {
+    const listRes = await fetch(`${baseUrl}/api/demo/page`);
+    const { items } = await listRes.json();
+    const id = items[0].id;
+    const originalTitle = items[0].seoTitle;
+
+    await fetch(`${baseUrl}/api/demo/page/${encodeURIComponent(id)}/seo`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "Temporary" }),
+    });
+
+    const resetRes = await fetch(`${baseUrl}/api/demo/reset`, { method: "POST" });
+    assert.equal(resetRes.status, 200);
+
+    const getRes = await fetch(`${baseUrl}/api/demo/page/${encodeURIComponent(id)}`);
+    const afterReset = await getRes.json();
+    assert.equal(afterReset.seoTitle, originalTitle);
+  });
+
+  test("/api/demo/* is not shadowed by the generic /api/:type routes", async () => {
+    // Regression guard: /api/demo/dashboard has the same path shape as
+    // /api/:type/:id, and /api/demo/:type has the same shape as
+    // /api/:type/:id too. If registerDemoRoutes ever moved after
+    // registerApiRoutes in server.js, these would start returning
+    // "Unknown resource type" (400) or an auth error (401) instead.
+    const dashboardRes = await fetch(`${baseUrl}/api/demo/dashboard`);
+    assert.equal(dashboardRes.status, 200);
+    const productsRes = await fetch(`${baseUrl}/api/demo/product`);
+    assert.equal(productsRes.status, 200);
+  });
+});
+
 describe("API auth boundary", () => {
   test("rejects requests with no session token", async () => {
     const res = await fetch(`${baseUrl}/api/dashboard`);

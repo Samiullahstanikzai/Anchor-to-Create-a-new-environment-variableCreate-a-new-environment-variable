@@ -3,6 +3,7 @@
 
   const content = document.getElementById("content");
   const tabsEl = document.getElementById("tabs");
+  const DEMO_MODE = Boolean(window.__DEMO_MODE__);
 
   const RESOURCE_LABELS = {
     product: "Products",
@@ -12,7 +13,8 @@
   };
 
   // ---------------------------------------------------------------------
-  // Session token plumbing (App Bridge)
+  // Session token plumbing (App Bridge) — bypassed entirely in Demo Mode,
+  // which talks to the unauthenticated /api/demo/* routes instead.
   // ---------------------------------------------------------------------
   function hasAppBridge() {
     return typeof window.shopify !== "undefined" && typeof window.shopify.idToken === "function";
@@ -26,15 +28,12 @@
   }
 
   async function api(path, options = {}) {
-    const token = await getSessionToken();
-    const response = await fetch(path, {
-      ...options,
-      headers: {
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
-        Authorization: `Bearer ${token}`,
-        ...options.headers,
-      },
-    });
+    const targetPath = DEMO_MODE ? path.replace(/^\/api\//, "/api/demo/") : path;
+    const headers = { ...(options.body ? { "Content-Type": "application/json" } : {}), ...options.headers };
+    if (!DEMO_MODE) {
+      headers.Authorization = `Bearer ${await getSessionToken()}`;
+    }
+    const response = await fetch(targetPath, { ...options, headers });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data.error || `Request failed with status ${response.status}`);
@@ -98,7 +97,7 @@
     toast.textContent = message;
     toast.classList.add("visible");
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => toast.classList.remove("visible"), 2500);
+    showToast._t = setTimeout(() => toast.classList.remove("visible"), 3200);
   }
 
   function setLoading() {
@@ -425,8 +424,8 @@
   // Router dispatch
   // ---------------------------------------------------------------------
   async function render() {
-    if (!hasAppBridge()) {
-      content.innerHTML = `<p class="error">Open this app from inside your Shopify admin (App Bridge is unavailable outside the embedded iframe).</p>`;
+    if (!DEMO_MODE && !hasAppBridge()) {
+      content.innerHTML = `<p class="error">Open this app from inside your Shopify admin (App Bridge is unavailable outside the embedded iframe). Prefer to look around first? Try <a href="/demo">the live demo</a> — no store required.</p>`;
       return;
     }
 
@@ -436,6 +435,22 @@
     if (view === "list" && type) return renderList(type);
     if (view === "detail" && type && id) return renderDetail(type, id);
     navigate("/dashboard");
+  }
+
+  const resetDemoBtn = document.getElementById("reset-demo-btn");
+  if (resetDemoBtn) {
+    resetDemoBtn.addEventListener("click", async () => {
+      resetDemoBtn.disabled = true;
+      try {
+        await fetch("/api/demo/reset", { method: "POST" });
+        showToast("Demo data reset.");
+        render();
+      } catch (err) {
+        showToast(`Failed to reset: ${err.message}`);
+      } finally {
+        resetDemoBtn.disabled = false;
+      }
+    });
   }
 
   render();
