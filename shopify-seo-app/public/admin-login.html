@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SEO Auditor — Admin login</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .login-card {
+        width: 320px;
+      }
+      .login-card h1 {
+        font-size: 18px;
+        margin: 0 0 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card login-card">
+      <h1>SEO Auditor — Admin</h1>
+      <label for="password">Admin password</label>
+      <input type="password" id="password" autofocus />
+      <div class="actions">
+        <button class="primary" id="login-btn" style="width:100%">Log in</button>
+      </div>
+      <p id="error" class="error" style="display:none;padding:8px 0;text-align:left"></p>
+    </div>
+    <script>
+      const passwordInput = document.getElementById("password");
+      const errorEl = document.getElementById("error");
+      const loginBtn = document.getElementById("login-btn");
+
+      async function submit() {
+        errorEl.style.display = "none";
+        loginBtn.disabled = true;
+        try {
+          const res = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: passwordInput.value }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || "Login failed");
+          window.location.href = "/admin";
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = "block";
+        } finally {
+          loginBtn.disabled = false;
+        }
+      }
+
+      loginBtn.addEventListener("click", submit);
+      passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submit();
+      });
+    </script>
+  </body>
+</html>

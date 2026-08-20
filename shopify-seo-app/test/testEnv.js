@@ -8,9 +8,11 @@ process.env.SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || "test-api-key";
 process.env.SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET || "test-api-secret";
 process.env.HOST = process.env.HOST || "http://localhost:3000";
 process.env.SCOPES = process.env.SCOPES || "read_products,write_products,read_content,write_content";
+process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "test-admin-password";
 
 const tmpDir = mkdtempSync(join(tmpdir(), "shopify-seo-app-test-"));
 process.env.SESSION_DB_PATH = join(tmpDir, "sessions.json");
 
 export const TEST_API_KEY = process.env.SHOPIFY_API_KEY;
 export const TEST_API_SECRET = process.env.SHOPIFY_API_SECRET;
+export const TEST_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;

@@ -123,6 +123,79 @@ describe("webhooks", () => {
   });
 });
 
+describe("admin dashboard", () => {
+  function extractCookie(res) {
+    const setCookie = res.headers.get("set-cookie") || "";
+    return setCookie.split(";")[0];
+  }
+
+  test("GET /admin without a session redirects to the login page", async () => {
+    const res = await fetch(`${baseUrl}/admin`, { redirect: "manual" });
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get("location"), "/admin/login");
+  });
+
+  test("GET /admin/login serves the login page", async () => {
+    const res = await fetch(`${baseUrl}/admin/login`);
+    assert.equal(res.status, 200);
+    assert.match(await res.text(), /Admin password/);
+  });
+
+  test("POST /admin/login rejects an incorrect password", async () => {
+    const res = await fetch(`${baseUrl}/admin/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password: "definitely-wrong" }),
+    });
+    assert.equal(res.status, 401);
+  });
+
+  test("unauthenticated admin API calls are rejected", async () => {
+    const res = await fetch(`${baseUrl}/api/admin/status`);
+    assert.equal(res.status, 401);
+  });
+
+  test("logging in grants access to /admin and the admin API", async () => {
+    const loginRes = await fetch(`${baseUrl}/admin/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password: process.env.ADMIN_PASSWORD }),
+    });
+    assert.equal(loginRes.status, 200);
+    const cookie = extractCookie(loginRes);
+    assert.match(cookie, /seo_app_admin_session=/);
+
+    const dashboardRes = await fetch(`${baseUrl}/admin`, { headers: { cookie } });
+    assert.equal(dashboardRes.status, 200);
+
+    const statusRes = await fetch(`${baseUrl}/api/admin/status`, { headers: { cookie } });
+    assert.equal(statusRes.status, 200);
+    const status = await statusRes.json();
+    assert.equal(typeof status.installedShopCount, "number");
+    assert.deepEqual(status.scopes, process.env.SCOPES.split(","));
+
+    await sessionStore.storeSession("admin-test-shop.myshopify.com", { accessToken: "shpat_fake" });
+
+    const shopsRes = await fetch(`${baseUrl}/api/admin/shops`, { headers: { cookie } });
+    assert.equal(shopsRes.status, 200);
+    const shops = await shopsRes.json();
+    assert.ok(shops.some((s) => s.shop === "admin-test-shop.myshopify.com" && s.hasAccessToken === true));
+
+    const revokeRes = await fetch(`${baseUrl}/api/admin/shops/admin-test-shop.myshopify.com/revoke`, {
+      method: "POST",
+      headers: { cookie },
+    });
+    assert.equal(revokeRes.status, 200);
+    assert.equal(await sessionStore.loadSession("admin-test-shop.myshopify.com"), null);
+  });
+
+  test("/admin/logout clears the session cookie", async () => {
+    const res = await fetch(`${baseUrl}/admin/logout`, { redirect: "manual" });
+    assert.equal(res.status, 302);
+    assert.equal(extractCookie(res), "seo_app_admin_session=");
+  });
+});
+
 describe("API auth boundary", () => {
   test("rejects requests with no session token", async () => {
     const res = await fetch(`${baseUrl}/api/dashboard`);

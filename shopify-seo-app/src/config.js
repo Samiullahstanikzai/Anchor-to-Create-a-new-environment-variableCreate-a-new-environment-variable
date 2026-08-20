@@ -49,6 +49,8 @@ export const config = {
   apiVersion: required("SHOPIFY_API_VERSION", "2024-10"),
   sessionDbPath: required("SESSION_DB_PATH", join(rootDir, "data", "sessions.json")),
   storeDisplayName: required("STORE_DISPLAY_NAME", ""),
+  adminPassword: required("ADMIN_PASSWORD", ""),
+  adminSessionSecret: required("ADMIN_SESSION_SECRET", "") || undefined,
 };
 
 export function assertConfigured() {

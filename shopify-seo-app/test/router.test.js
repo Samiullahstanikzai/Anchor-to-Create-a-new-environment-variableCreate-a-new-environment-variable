@@ -39,4 +39,17 @@ describe("Router", () => {
     const match = router.match("GET", "/api/dashboard");
     assert.equal(match.handler(), "specific");
   });
+
+  test("a same-segment-count wildcard registered first shadows a more specific route registered after it", () => {
+    // This is a regression guard for a real bug: `/api/:type/:id` and
+    // `/api/admin/status` both have 3 path segments, so whichever is
+    // registered first wins. Route registration order in server.js must
+    // put admin/other specific routes before the generic `/api/:type*`
+    // routes for this reason.
+    const router = new Router();
+    router.get("/api/:type/:id", () => "generic");
+    router.get("/api/admin/status", () => "specific");
+    const match = router.match("GET", "/api/admin/status");
+    assert.equal(match.handler(), "generic", "demonstrates the shadowing hazard this app's route order avoids");
+  });
 });

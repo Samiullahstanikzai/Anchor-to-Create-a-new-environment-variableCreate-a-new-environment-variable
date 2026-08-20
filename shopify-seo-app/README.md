@@ -23,6 +23,24 @@ registry access. If you'd rather use the official `@shopify/shopify-app-remix`
 stack, this codebase is small enough to be a clear reference for wiring the
 same OAuth/webhook/session-token flows yourself.
 
+## Admin (operator) dashboard
+
+Merchants get the embedded SEO dashboard inside their Shopify admin. But
+*you*, the person running this app, also get a separate dashboard for
+handling the app itself — at `/admin` — where you can:
+
+- See app configuration status (which required env vars are set, host, API
+  version, requested scopes).
+- See every shop that has installed the app, when, and with what scope.
+- Revoke a shop's locally-stored session (e.g. to force a clean
+  reinstall), without needing direct file/database access.
+
+Enable it by setting `ADMIN_PASSWORD` in `.env` and restarting the app,
+then visit `${HOST}/admin` and log in. It's disabled by default (`/admin`
+returns a clear "set ADMIN_PASSWORD" message) so a fresh clone never ships
+an unauthenticated management page. Login uses a signed, expiring
+(12-hour) cookie — see `src/lib/adminAuth.js`.
+
 ## How it stores SEO data
 
 SEO title/description are read and written as the classic
@@ -48,10 +66,12 @@ shopify-seo-app/
       sitemapCheck.js           # public sitemap.xml / robots.txt checks
       router.js                 # tiny `:param` path router
       cookies.js                 # cookie parse/serialize helpers
+      adminAuth.js                # signed-cookie auth for the operator dashboard
     queries/                # GraphQL query/mutation strings per resource type
-    routes/                 # auth.js, webhooks.js, api.js, static.js
+    routes/                 # auth.js, webhooks.js, api.js, admin.js, static.js
   public/                  # embedded app frontend (App Bridge + vanilla JS, no build step)
-  test/                    # node:test unit + integration tests (63 tests, no deps needed)
+                            # + admin-login.html / admin.html / admin.js for the operator dashboard
+  test/                    # node:test unit + integration tests (78 tests, no deps needed)
   shopify.app.toml         # Shopify CLI app configuration (scopes, webhooks, URLs)
 ```
 
@@ -93,13 +113,17 @@ shopify-seo-app/
 npm test
 ```
 
-63 tests cover HMAC/session-token verification (forged signatures, expired
-tokens, audience mismatches), the SEO scoring engine (every status
-threshold), the path router, and a full HTTP integration suite that boots
-the real server and drives it through OAuth-begin, a rejected forged OAuth
-callback, HMAC-verified and rejected webhook deliveries, and the
-session-token auth boundary on the API — no mocking of the app's own code,
-no external network calls in the test suite itself.
+78 tests cover HMAC/session-token verification (forged signatures, expired
+tokens, audience mismatches), admin-dashboard login/session-cookie
+verification, the SEO scoring engine (every status threshold), the path
+router (including a regression test for a route-shadowing bug that was
+caught and fixed while building the admin API), and a full HTTP
+integration suite that boots the real server and drives it through
+OAuth-begin, a rejected forged OAuth callback, HMAC-verified and rejected
+webhook deliveries, the session-token auth boundary on the merchant API,
+and a full admin-dashboard login → view shops → revoke a shop → logout
+flow — no mocking of the app's own code, no external network calls in the
+test suite itself.
 
 ## What's genuinely verified vs. what needs a real store
 
