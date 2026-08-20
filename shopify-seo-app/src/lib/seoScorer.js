@@ -172,9 +172,34 @@ export function scoreImageAlt(images) {
 }
 
 /**
+ * Checks whether a resource is actually visible to customers/search
+ * engines at all — the best-optimized SEO title in the world doesn't
+ * matter if the page is unpublished. `visibility` is `{ visible, reason }`,
+ * normalized per resource type in `src/queries/*.js` since the underlying
+ * Shopify field differs (Product uses `status`, Page/Article use
+ * `publishedAt`). Pass `undefined` for resource types where this isn't
+ * applicable (e.g. collections), same convention as `images`.
+ */
+export function scoreVisibility(visibility) {
+  if (!visibility) {
+    return check("visibility", "Visibility", "critical", "Could not determine whether this is published.");
+  }
+  if (visibility.visible) {
+    return check("visibility", "Visibility", "good", visibility.reason || "Published and visible to customers.");
+  }
+  return check(
+    "visibility",
+    "Visibility",
+    "critical",
+    `Not visible to customers or search engines: ${visibility.reason || "unpublished"}. None of the other SEO checks matter until this is fixed.`
+  );
+}
+
+/**
  * Computes an overall 0-100 score and grade for a normalized resource.
- * `resource.images` is optional — omit it for resource types (pages,
- * articles) where image alt text isn't part of the on-page SEO surface.
+ * `resource.images` and `resource.visibility` are optional — omit them for
+ * resource types where they don't apply (see `scoreImageAlt` and
+ * `scoreVisibility` docs above).
  */
 export function scoreResource(resource) {
   const checks = [
@@ -184,6 +209,9 @@ export function scoreResource(resource) {
   ];
   if (resource.images !== undefined) {
     checks.push(scoreImageAlt(resource.images));
+  }
+  if (resource.visibility !== undefined) {
+    checks.push(scoreVisibility(resource.visibility));
   }
 
   const score = Math.round(checks.reduce((sum, c) => sum + STATUS_SCORE[c.status], 0) / checks.length);

@@ -41,6 +41,11 @@ export const UPDATE_COLLECTION_HANDLE_MUTATION = `
 
 export function normalizeCollection(node) {
   return {
+    // Collections don't have a simple draft/published boolean field like
+    // Product.status or Page/Article.publishedAt — visibility per sales
+    // channel is tracked separately via publications, which is out of
+    // scope here. `visibility` is intentionally omitted so scoreResource()
+    // skips that check for collections rather than guessing.
     id: node.id,
     title: node.title,
     handle: node.handle,

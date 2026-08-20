@@ -1,9 +1,18 @@
 # SEO Auditor for Shopify
 
 An embedded Shopify admin app that audits and fixes on-page SEO for
-**products, collections, pages, and blog articles** — SEO title/meta
-description length, URL handle quality, and (for products) image alt-text
-coverage — plus a public sitemap.xml / robots.txt checker.
+**products, collections, pages, and blog articles**:
+
+- SEO title / meta description length and presence
+- URL handle quality
+- Image alt-text coverage (products)
+- **Visibility** — is this product actually published (`status`), is this
+  page/article actually published (`publishedAt`)? An unpublished resource
+  fails this check regardless of how good its other SEO fields are, since
+  none of them matter if customers and search engines can't see it at all.
+- **Broken links** — scans a resource's body copy for `<a href>` links and
+  checks whether each one still resolves, on demand from its detail page
+- A public sitemap.xml / robots.txt checker for the whole storefront
 
 It is a **complete, working Node.js implementation** of the pieces every
 real Shopify app needs: OAuth install flow, HMAC-verified webhooks
@@ -34,7 +43,7 @@ function, with `public/*.html|js|css` served directly by Vercel.
 **Honest caveat:** this configuration has not been exercised against a real
 Vercel deployment — doing so requires a connected Vercel account, which
 wasn't available while building this. What *is* verified locally
-(`test/vercelHandler.test.js`, part of the 81-test suite) is that the
+(`test/vercelHandler.test.js`, part of the 95-test suite) is that the
 serverless entry point wraps the same app logic correctly when run behind a
 plain HTTP server. The Vercel-specific pieces — static-file-vs-rewrite
 routing precedence and `includeFiles` bundling — should be treated as a
@@ -88,6 +97,7 @@ shopify-seo-app/
       seoScorer.js             # pure scoring + suggestion-generation logic
       resourceService.js       # ties GraphQL queries + scoring together per resource type
       sitemapCheck.js           # public sitemap.xml / robots.txt checks
+      linkChecker.js             # extracts + checks <a href> links in body copy
       router.js                 # tiny `:param` path router
       cookies.js                 # cookie parse/serialize helpers
       adminAuth.js                # signed-cookie auth for the operator dashboard
@@ -97,7 +107,7 @@ shopify-seo-app/
                             # + admin-login.html / admin.html / admin.js for the operator dashboard
   api/index.js             # Vercel serverless function entry point (wraps the same app logic)
   vercel.json              # Vercel routing config: rewrites dynamic paths to api/index.js
-  test/                    # node:test unit + integration tests (81 tests, no deps needed)
+  test/                    # node:test unit + integration tests (95 tests, no deps needed)
   shopify.app.toml         # Shopify CLI app configuration (scopes, webhooks, URLs)
 ```
 
@@ -139,17 +149,20 @@ shopify-seo-app/
 npm test
 ```
 
-81 tests cover HMAC/session-token verification (forged signatures, expired
+95 tests cover HMAC/session-token verification (forged signatures, expired
 tokens, audience mismatches), admin-dashboard login/session-cookie
-verification, the SEO scoring engine (every status threshold), the path
-router (including a regression test for a route-shadowing bug that was
-caught and fixed while building the admin API), and a full HTTP
+verification, the SEO scoring engine including the visibility check (every
+status threshold), the broken-link extractor and checker (including a real
+network call against a reachable URL, not just mocks — see below), the
+path router (including a regression test for a route-shadowing bug that
+was caught and fixed while building the admin API), and a full HTTP
 integration suite that boots the real server and drives it through
 OAuth-begin, a rejected forged OAuth callback, HMAC-verified and rejected
 webhook deliveries, the session-token auth boundary on the merchant API,
 and a full admin-dashboard login → view shops → revoke a shop → logout
 flow — no mocking of the app's own code, no external network calls in the
-test suite itself.
+test suite itself (the link-checker's own tests mock `fetch`; it was
+additionally exercised against real URLs manually while building it).
 
 ## What's genuinely verified vs. what needs a real store
 

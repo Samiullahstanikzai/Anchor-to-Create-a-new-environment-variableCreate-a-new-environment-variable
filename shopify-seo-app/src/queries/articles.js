@@ -25,6 +25,7 @@ export const LIST_ARTICLES_FOR_BLOG_QUERY = `
             title
             handle
             body
+            publishedAt
             ${SEO_METAFIELDS_FRAGMENT}
           }
         }
@@ -41,6 +42,7 @@ export const GET_ARTICLE_QUERY = `
       title
       handle
       body
+      publishedAt
       blog { id title }
       ${SEO_METAFIELDS_FRAGMENT}
     }
@@ -64,6 +66,10 @@ export function normalizeArticle(node, blog) {
     bodyHtml: node.body,
     blogId: blog?.id,
     blogTitle: blog?.title,
+    visibility: {
+      visible: Boolean(node.publishedAt),
+      reason: node.publishedAt ? `Published ${node.publishedAt}` : "Not published (still a draft)",
+    },
     ...extractSeoFields(node),
   };
 }

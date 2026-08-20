@@ -13,6 +13,7 @@ import {
   suggestSeoDescription,
 } from "../lib/resourceService.js";
 import { checkSitemap } from "../lib/sitemapCheck.js";
+import { checkBrokenLinks } from "../lib/linkChecker.js";
 
 function sendJson(res, status, body) {
   const payload = JSON.stringify(body);
@@ -193,6 +194,33 @@ export function registerApiRoutes(router) {
       sendJson(res, 200, { ok: true, result });
     } catch (err) {
       sendJson(res, 400, { error: err.message });
+    }
+  });
+
+  // Scans a resource's body copy for links and checks whether each one
+  // actually resolves. Run on-demand (not as part of list/dashboard
+  // scoring) since each link is a real, slow network round trip.
+  router.get("/api/:type/:id/links", async (req, res, { params }) => {
+    const auth = await authenticate(req, res);
+    if (!auth) return;
+    let resource;
+    try {
+      resource = assertValidResourceType(params.type);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message });
+    }
+
+    try {
+      const item = await resource.get(auth.shop, auth.accessToken, decodeGid(params.id));
+      if (!item) return sendJson(res, 404, { error: "Not found" });
+
+      const shopData = await shopifyGraphql(auth.shop, auth.accessToken, SHOP_QUERY);
+      const baseUrl = shopData.shop?.primaryDomain?.url || `https://${auth.shop}`;
+
+      const result = await checkBrokenLinks(item.bodyHtml, baseUrl);
+      sendJson(res, 200, result);
+    } catch (err) {
+      sendJson(res, 502, { error: err.message });
     }
   });
 

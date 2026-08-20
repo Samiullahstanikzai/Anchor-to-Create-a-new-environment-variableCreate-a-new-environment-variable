@@ -14,6 +14,7 @@ export const LIST_PAGES_QUERY = `
           title
           handle
           body
+          publishedAt
           ${SEO_METAFIELDS_FRAGMENT}
         }
       }
@@ -29,6 +30,7 @@ export const GET_PAGE_QUERY = `
       title
       handle
       body
+      publishedAt
       ${SEO_METAFIELDS_FRAGMENT}
     }
   }
@@ -49,6 +51,10 @@ export function normalizePage(node) {
     title: node.title,
     handle: node.handle,
     bodyHtml: node.body,
+    visibility: {
+      visible: Boolean(node.publishedAt),
+      reason: node.publishedAt ? `Published ${node.publishedAt}` : "Not published (still a draft)",
+    },
     ...extractSeoFields(node),
   };
 }

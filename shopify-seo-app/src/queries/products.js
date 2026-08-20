@@ -74,6 +74,10 @@ export function normalizeProduct(node) {
     status: node.status,
     bodyHtml: node.descriptionHtml,
     images: (node.images?.edges ?? []).map((e) => ({ id: e.node.id, alt: e.node.altText })),
+    visibility: {
+      visible: node.status === "ACTIVE",
+      reason: node.status === "ACTIVE" ? "Active" : `Status is ${node.status}`,
+    },
     ...extractSeoFields(node),
   };
 }

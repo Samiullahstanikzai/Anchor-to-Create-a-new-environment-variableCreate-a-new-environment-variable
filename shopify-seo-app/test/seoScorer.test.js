@@ -5,6 +5,7 @@ import {
   scoreSeoDescription,
   scoreHandle,
   scoreImageAlt,
+  scoreVisibility,
   scoreResource,
   suggestSeoTitle,
   suggestSeoDescription,
@@ -117,6 +118,24 @@ describe("scoreImageAlt", () => {
   });
 });
 
+describe("scoreVisibility", () => {
+  test("passes for a visible resource", () => {
+    const result = scoreVisibility({ visible: true, reason: "Active" });
+    assert.equal(result.status, "good");
+  });
+
+  test("flags a hidden/unpublished resource as critical", () => {
+    const result = scoreVisibility({ visible: false, reason: "Status is DRAFT" });
+    assert.equal(result.status, "critical");
+    assert.match(result.message, /Status is DRAFT/);
+  });
+
+  test("flags critical (rather than throwing) when visibility info is missing", () => {
+    assert.equal(scoreVisibility(undefined).status, "critical");
+    assert.equal(scoreVisibility(null).status, "critical");
+  });
+});
+
 describe("scoreResource", () => {
   test("computes a low score for a resource with every field missing", () => {
     const result = scoreResource({ title: "", seoTitle: "", seoDescription: "", handle: "", images: [] });
@@ -138,7 +157,7 @@ describe("scoreResource", () => {
     assert.equal(result.issueCount, 0);
   });
 
-  test("omits the image check entirely when `images` is not provided", () => {
+  test("omits the image and visibility checks entirely when not provided", () => {
     const result = scoreResource({
       title: "About us",
       seoTitle: "About us | Acme Co",
@@ -146,6 +165,20 @@ describe("scoreResource", () => {
       handle: "about-us",
     });
     assert.ok(!result.checks.some((c) => c.id === "images"));
+    assert.ok(!result.checks.some((c) => c.id === "visibility"));
+  });
+
+  test("an otherwise-perfect but unpublished resource still scores badly", () => {
+    const result = scoreResource({
+      title: "Great blog post",
+      seoTitle: "Great blog post | Acme Co",
+      seoDescription: "A".repeat(120),
+      handle: "great-blog-post",
+      visibility: { visible: false, reason: "Not published (still a draft)" },
+    });
+    const visibilityCheck = result.checks.find((c) => c.id === "visibility");
+    assert.equal(visibilityCheck.status, "critical");
+    assert.ok(result.issueCount >= 1);
   });
 });
 

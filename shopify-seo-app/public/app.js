@@ -274,6 +274,17 @@
       </div>
 
       ${imagesSection}
+
+      <div class="card">
+        <h3 style="margin-top:0">Broken links</h3>
+        <p style="color:var(--color-subdued);font-size:13px">
+          Scans this ${escapeHtml(type)}'s body copy for links and checks whether each one still loads.
+        </p>
+        <div class="actions">
+          <button class="secondary" id="check-links-btn">Check for broken links</button>
+        </div>
+        <div id="links-result"></div>
+      </div>
     `;
 
     document.getElementById("back-link").addEventListener("click", () => navigate(`/list/${type}`));
@@ -344,6 +355,41 @@
         }
       });
     }
+
+    const checkLinksBtn = document.getElementById("check-links-btn");
+    const linksResultEl = document.getElementById("links-result");
+    checkLinksBtn.addEventListener("click", async () => {
+      checkLinksBtn.disabled = true;
+      linksResultEl.innerHTML = `<p class="loading">Checking links…</p>`;
+      try {
+        const result = await api(`/api/${type}/${encodeURIComponent(item.id)}/links`);
+        if (result.checked === 0) {
+          linksResultEl.innerHTML = `<p style="color:var(--color-subdued);font-size:13px">No links found in the body copy.</p>`;
+          return;
+        }
+        const rows = result.results
+          .map(
+            (r) => `
+            <div class="check-row">
+              <span class="dot ${r.broken ? "critical" : "good"}"></span>
+              <div>
+                <strong>${r.broken ? "Broken" : "OK"}${r.status ? ` (HTTP ${r.status})` : ""}</strong>
+                <span>${escapeHtml(r.url)}${r.error ? ` — ${escapeHtml(r.error)}` : ""}</span>
+              </div>
+            </div>`
+          )
+          .join("");
+        linksResultEl.innerHTML = `
+          <p style="font-size:13px;color:var(--color-subdued);margin:12px 0 4px">
+            Checked ${result.checked} link(s) — ${result.broken} broken.
+          </p>
+          ${rows}`;
+      } catch (err) {
+        linksResultEl.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
+      } finally {
+        checkLinksBtn.disabled = false;
+      }
+    });
   }
 
   async function renderSitemap() {
