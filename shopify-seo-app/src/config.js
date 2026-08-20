@@ -39,15 +39,24 @@ function required(name, fallback) {
   return value;
 }
 
+// Vercel (and most serverless platforms) set these automatically. When
+// present, they let sensible defaults work with zero extra configuration:
+// the deployment's own URL as HOST, and `/tmp` (the only writable path in
+// a serverless function) for the session file instead of the repo folder.
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const defaultHost = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+const defaultSessionDbPath = isServerless ? "/tmp/shopify-seo-app-sessions.json" : join(rootDir, "data", "sessions.json");
+
 export const config = {
   rootDir,
+  isServerless,
   apiKey: required("SHOPIFY_API_KEY", ""),
   apiSecret: required("SHOPIFY_API_SECRET", ""),
   scopes: required("SCOPES", "read_products,write_products,read_content,write_content"),
-  host: (required("HOST", "http://localhost:3000") || "").replace(/\/+$/, ""),
+  host: (required("HOST", defaultHost) || "").replace(/\/+$/, ""),
   port: Number(required("PORT", "3000")),
   apiVersion: required("SHOPIFY_API_VERSION", "2024-10"),
-  sessionDbPath: required("SESSION_DB_PATH", join(rootDir, "data", "sessions.json")),
+  sessionDbPath: required("SESSION_DB_PATH", defaultSessionDbPath),
   storeDisplayName: required("STORE_DISPLAY_NAME", ""),
   adminPassword: required("ADMIN_PASSWORD", ""),
   adminSessionSecret: required("ADMIN_SESSION_SECRET", "") || undefined,

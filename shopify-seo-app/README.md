@@ -23,6 +23,30 @@ registry access. If you'd rather use the official `@shopify/shopify-app-remix`
 stack, this codebase is small enough to be a clear reference for wiring the
 same OAuth/webhook/session-token flows yourself.
 
+## Deploying it so you get a real, clickable URL
+
+Everything above runs locally with `npm start`, but a browser needs a real
+public URL to open — `localhost` only means something on the machine it's
+running on. This repo includes a ready-to-go Vercel deployment (`vercel.json`,
+`api/index.js`) that wraps the exact same request logic as a serverless
+function, with `public/*.html|js|css` served directly by Vercel.
+
+**Honest caveat:** this configuration has not been exercised against a real
+Vercel deployment — doing so requires a connected Vercel account, which
+wasn't available while building this. What *is* verified locally
+(`test/vercelHandler.test.js`, part of the 81-test suite) is that the
+serverless entry point wraps the same app logic correctly when run behind a
+plain HTTP server. The Vercel-specific pieces — static-file-vs-rewrite
+routing precedence and `includeFiles` bundling — should be treated as a
+first, reasonable attempt rather than a guarantee, and may need one small
+follow-up fix once actually deployed (which is fast to do, since deploy
+logs make the exact problem obvious).
+
+To deploy:
+1. Connect this repo to Vercel (via the Vercel dashboard, or `vercel` CLI from this directory).
+2. Set `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SCOPES`, and `ADMIN_PASSWORD` as Vercel environment variables (`HOST` is derived automatically from `VERCEL_URL`).
+3. Deploy. Note that on serverless hosting, session storage (`sessionDbPath`, which points at `/tmp` automatically when `VERCEL` is set) is not persistent across cold starts or multiple instances — fine for exploring the admin dashboard and OAuth flow, but swap `src/lib/sessionStore.js` for a real database (see "Extending" below) before relying on this for real merchant installs.
+
 ## Admin (operator) dashboard
 
 Merchants get the embedded SEO dashboard inside their Shopify admin. But
@@ -71,7 +95,9 @@ shopify-seo-app/
     routes/                 # auth.js, webhooks.js, api.js, admin.js, static.js
   public/                  # embedded app frontend (App Bridge + vanilla JS, no build step)
                             # + admin-login.html / admin.html / admin.js for the operator dashboard
-  test/                    # node:test unit + integration tests (78 tests, no deps needed)
+  api/index.js             # Vercel serverless function entry point (wraps the same app logic)
+  vercel.json              # Vercel routing config: rewrites dynamic paths to api/index.js
+  test/                    # node:test unit + integration tests (81 tests, no deps needed)
   shopify.app.toml         # Shopify CLI app configuration (scopes, webhooks, URLs)
 ```
 
@@ -113,7 +139,7 @@ shopify-seo-app/
 npm test
 ```
 
-78 tests cover HMAC/session-token verification (forged signatures, expired
+81 tests cover HMAC/session-token verification (forged signatures, expired
 tokens, audience mismatches), admin-dashboard login/session-cookie
 verification, the SEO scoring engine (every status threshold), the path
 router (including a regression test for a route-shadowing bug that was

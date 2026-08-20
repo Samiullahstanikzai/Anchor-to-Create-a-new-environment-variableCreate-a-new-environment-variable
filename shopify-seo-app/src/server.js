@@ -35,8 +35,14 @@ function readRawBody(req) {
   });
 }
 
-export function createHttpServer(router = createApp()) {
-  return createServer(async (req, res) => {
+/**
+ * The core request handler, decoupled from `node:http`'s `createServer` so
+ * it can also be used as a serverless function entry point (see
+ * `api/index.js`, used for deploying to Vercel) — both are just "a function
+ * that receives a Node-style `(req, res)`".
+ */
+export function createRequestHandler(router = createApp()) {
+  return async function handleRequest(req, res) {
     try {
       const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
       const match = router.match(req.method, url.pathname);
@@ -69,7 +75,11 @@ export function createHttpServer(router = createApp()) {
       }
       console.error("Unhandled request error:", err);
     }
-  });
+  };
+}
+
+export function createHttpServer(router = createApp()) {
+  return createServer(createRequestHandler(router));
 }
 
 function main() {
