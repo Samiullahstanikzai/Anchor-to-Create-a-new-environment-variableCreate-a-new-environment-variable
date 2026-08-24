@@ -1,0 +1,17 @@
+{
+  "name": "shopify-seo-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An embedded Shopify app that audits and fixes on-page SEO for products, collections, pages, and blog articles.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

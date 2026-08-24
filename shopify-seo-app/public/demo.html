@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SEO Auditor — Live Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <script>
+      // Read by app.js. Demo mode never talks to Shopify or requires App
+      // Bridge — it hits the unauthenticated /api/demo/* routes instead,
+      // which serve the realistic sample dataset in src/lib/demoData.js.
+      window.__DEMO_MODE__ = true;
+    </script>
+    <div class="demo-banner">
+      <strong>Live demo</strong> — sample data, not connected to a real Shopify store. Every score, suggestion, and
+      the broken-link checker below is real and fully working against this sample dataset.
+      <button class="secondary" id="reset-demo-btn" type="button">Reset demo data</button>
+    </div>
+    <div id="app">
+      <header class="topbar">
+        <h1>SEO Auditor</h1>
+        <nav class="tabs" id="tabs">
+          <button data-view="dashboard" class="tab active">Dashboard</button>
+          <button data-view="product" class="tab">Products</button>
+          <button data-view="collection" class="tab">Collections</button>
+          <button data-view="page" class="tab">Pages</button>
+          <button data-view="article" class="tab">Blog posts</button>
+          <button data-view="sitemap" class="tab">Sitemap &amp; robots.txt</button>
+        </nav>
+      </header>
+      <main id="content" class="content">
+        <p class="loading">Loading…</p>
+      </main>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>
