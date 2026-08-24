@@ -235,10 +235,12 @@ export function registerApiRoutes(router) {
       const product = await RESOURCE_TYPES.product.get(auth.shop, auth.accessToken, productGid);
       if (!product) return sendJson(res, 404, { error: "Product not found" });
 
-      const missing = product.images.filter((img) => !img.alt || !img.alt.trim());
+      const missing = product.images
+        .map((img, i) => ({ img, position: i + 1 }))
+        .filter(({ img }) => !img.alt || !img.alt.trim());
       if (missing.length === 0) return sendJson(res, 200, { ok: true, updated: 0 });
 
-      const media = missing.map((img, i) => ({ id: img.id, alt: `${product.title} — image ${i + 1}` }));
+      const media = missing.map(({ img, position }) => ({ id: img.id, alt: `${product.title} — image ${position}` }));
       const result = await updateProductImageAlt(auth.shop, auth.accessToken, productGid, media);
       sendJson(res, 200, { ok: true, updated: media.length, result });
     } catch (err) {

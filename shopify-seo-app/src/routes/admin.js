@@ -43,12 +43,12 @@ export function registerAdminRoutes(router) {
       return sendJson(res, 401, { error: "Incorrect password" });
     }
     const token = createAdminSessionToken();
-    res.setHeader("Set-Cookie", serializeCookie(ADMIN_COOKIE, token, { maxAgeSeconds: 60 * 60 * 12 }));
+    res.setHeader("Set-Cookie", serializeCookie(ADMIN_COOKIE, token, { maxAgeSeconds: 60 * 60 * 12, secure: true }));
     sendJson(res, 200, { ok: true });
   });
 
   router.get("/admin/logout", async (req, res) => {
-    res.setHeader("Set-Cookie", serializeCookie(ADMIN_COOKIE, "", { maxAgeSeconds: 0 }));
+    res.setHeader("Set-Cookie", serializeCookie(ADMIN_COOKIE, "", { maxAgeSeconds: 0, secure: true }));
     res.writeHead(302, { Location: "/admin/login" });
     res.end();
   });

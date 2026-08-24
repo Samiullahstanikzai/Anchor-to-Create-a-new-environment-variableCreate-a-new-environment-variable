@@ -11,8 +11,8 @@ export const LIST_PRODUCTS_QUERY = `
           handle
           descriptionHtml
           status
-          images(first: 20) {
-            edges { node { id altText } }
+          media(first: 20) {
+            edges { node { id alt mediaContentType } }
           }
           ${SEO_METAFIELDS_FRAGMENT}
         }
@@ -30,8 +30,8 @@ export const GET_PRODUCT_QUERY = `
       handle
       descriptionHtml
       status
-      images(first: 100) {
-        edges { node { id altText } }
+      media(first: 100) {
+        edges { node { id alt mediaContentType } }
       }
       ${SEO_METAFIELDS_FRAGMENT}
     }
@@ -73,7 +73,9 @@ export function normalizeProduct(node) {
     handle: node.handle,
     status: node.status,
     bodyHtml: node.descriptionHtml,
-    images: (node.images?.edges ?? []).map((e) => ({ id: e.node.id, alt: e.node.altText })),
+    images: (node.media?.edges ?? [])
+      .filter((e) => e.node.mediaContentType === "IMAGE")
+      .map((e) => ({ id: e.node.id, alt: e.node.alt })),
     visibility: {
       visible: node.status === "ACTIVE",
       reason: node.status === "ACTIVE" ? "Active" : `Status is ${node.status}`,

@@ -71,17 +71,27 @@ function backoff(attempt) {
   return new Promise((r) => setTimeout(r, 250 * 2 ** attempt));
 }
 
+// Different mutations name their error field differently — most use
+// `userErrors`, but Media API mutations (e.g. `productUpdateMedia`) use
+// `mediaUserErrors` instead. Treat any array field whose name ends in
+// "UserErrors" as a source of failures so none of them get missed.
+function userErrorFields(value) {
+  return Object.keys(value).filter((key) => key.endsWith("UserErrors") && Array.isArray(value[key]));
+}
+
 function hasUserErrors(data) {
   return Object.values(data).some(
-    (value) => value && typeof value === "object" && Array.isArray(value.userErrors) && value.userErrors.length > 0
+    (value) => value && typeof value === "object" && userErrorFields(value).some((key) => value[key].length > 0)
   );
 }
 
 function collectUserErrors(data) {
   const messages = [];
   for (const value of Object.values(data)) {
-    if (value && typeof value === "object" && Array.isArray(value.userErrors)) {
-      for (const err of value.userErrors) messages.push(err.message);
+    if (value && typeof value === "object") {
+      for (const key of userErrorFields(value)) {
+        for (const err of value[key]) messages.push(err.message);
+      }
     }
   }
   return messages;
